@@ -1,0 +1,18 @@
+class KTPInformation(object):
+    def __init__(self):
+        self.id = ""
+        self.name = ""
+        self.birth_place = ""
+        self.birth_date = ""
+        self.gender = ""
+        self.blood_group = ""
+        self.address = ""
+        self.rt = ""
+        self.rw = ""
+        self.village = ""
+        self.district = ""
+        self.relligion = ""
+        self.marriage_status = ""
+        self.job = ""
+        self.citizenship = ""
+        self.valid_until = "SEUMUR HIDUP"
