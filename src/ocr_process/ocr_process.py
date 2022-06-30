@@ -6,7 +6,8 @@ import numpy
 import pytesseract
 
 from src.ocr_process.ktp_information import KTPInformation
-from easyocr import Reader
+from PIL import Image
+# from easyocr import Reader
 
 class OcrProcess:
     def __init__(self, image: numpy.ndarray):
@@ -17,12 +18,12 @@ class OcrProcess:
         # self.th, self.threshed = cv2.threshold(self.image, 127, 255, cv2.THRESH_TRUNC)
 
         # self.image = cv2.GaussianBlur(self.image, (5, 5), 0)
-        self.image = cv2.GaussianBlur(self.image, (15, 15), sigmaX=0, sigmaY=0)
+        self.image = cv2.GaussianBlur(self.image, (5, 5), sigmaX=0, sigmaY=0)
         # _, self.threshed = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
         processed_image = clahe.apply(self.image)
-        self.threshed = cv2.resize(processed_image, (1280, 720), interpolation=cv2.INTER_LINEAR)
+        self.threshed = cv2.resize(processed_image, (640, 360), interpolation=cv2.INTER_LINEAR)
 
         _, self.threshed = cv2.threshold(processed_image, 0, 255, cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
         self.threshed = cv2.adaptiveThreshold(self.threshed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
@@ -41,33 +42,39 @@ class OcrProcess:
 
         print("[INFO] OCR'ing input image...")
         start = time.time()
-        reader = Reader(["en"])
-        results = reader.readtext(image)
-        print("execution time: %.2f seconds" % (time.time() - start))
-
-        # loop over the results
-        for (bbox, text, prob) in results:
-            # display the OCR'd text and associated probability
-            print("[INFO] {:.4f}: {}".format(prob, text))
-            # # unpack the bounding box
-            # (tl, tr, br, bl) = bbox
-            # tl = (int(tl[0]), int(tl[1]))
-            # tr = (int(tr[0]), int(tr[1]))
-            # br = (int(br[0]), int(br[1]))
-            # bl = (int(bl[0]), int(bl[1]))
-            # # cleanup the text and draw the box surrounding the text along
-            # # with the OCR'd text itself
-            # text = cleanup_text(text)
-            # cv2.rectangle(image, tl, br, (0, 255, 0), 2)
-            # cv2.putText(image, text, (tl[0], tl[1] - 10),
-            # 	cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        # reader = Reader(["en"])
+        # results = reader.readtext(image)
         
-        # self.result = KTPInformation()
-        # self.master_process()
+
+        # # loop over the results
+        # for (bbox, text, prob) in results:
+        #     # display the OCR'd text and associated probability
+        #     print("[INFO] {:.4f}: {}".format(prob, text))
+        #     # # unpack the bounding box
+        #     # (tl, tr, br, bl) = bbox
+        #     # tl = (int(tl[0]), int(tl[1]))
+        #     # tr = (int(tr[0]), int(tr[1]))
+        #     # br = (int(br[0]), int(br[1]))
+        #     # bl = (int(bl[0]), int(bl[1]))
+        #     # # cleanup the text and draw the box surrounding the text along
+        #     # # with the OCR'd text itself
+        #     # text = cleanup_text(text)
+        #     # cv2.rectangle(image, tl, br, (0, 255, 0), 2)
+        #     # cv2.putText(image, text, (tl[0], tl[1] - 10),
+        #     # 	cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
+        
+        self.result = KTPInformation()
+        self.master_process()
+
+        print("execution time: %.2f seconds" % (time.time() - start))
 
     def process(self):
         raw_extracted_text = pytesseract.image_to_string(
-            (self.threshed), lang="ind")
+            (self.threshed), lang="nik")
+
+        # image_to_box = pytesseract.image_to_boxes(self.threshed, lang="indbest")
+
+        # for ()
 
         return raw_extracted_text
 

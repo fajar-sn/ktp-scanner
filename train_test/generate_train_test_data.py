@@ -1,9 +1,10 @@
 import os
 import cv2
 import numpy as np
+import random
 
 from tqdm import tqdm
-from RandomWordGenerator import RandomWord
+# from RandomWordGenerator import RandomWord
 
 from trdg.generators import (
     GeneratorFromRandom,
@@ -19,10 +20,11 @@ class NIKRandomGenerator(GeneratorFromRandom):
                         use_symbols=False)
         
         self.count = count
-        self.generator = GeneratorFromStrings(strings=self.pick_random_name(), 
-                                              fonts=[os.path.join(ROOT_DIR, 'train_test', 'fonts', 'arial.ttf')],
+        self.generator = GeneratorFromStrings(strings=self.create_numbers_randomly(), 
+                                            #   fonts=[os.path.join(ROOT_DIR, 'train_test', 'fonts', 'arial.ttf')],
+                                              fonts=[os.path.join(ROOT_DIR, 'train_test', 'fonts', 'ocraext.ttf')],
                                               skewing_angle=5,
-                                              random_blur=False,
+                                              random_blur=True,
                                               random_skew=True,
                                               distorsion_type=0,
                                               count=self.count,
@@ -30,24 +32,12 @@ class NIKRandomGenerator(GeneratorFromRandom):
                                               character_spacing=0,
                                               fit=True)
 
-    def pick_random_name(self):
-        random_word = RandomWord(include_digits=True, include_special_chars=True, special_chars=r"-")
-        words: list[str] = []
+    def create_numbers_randomly(self):
+        return [f"{random.randint(1000000000000000, 9999999999999999)}" for _ in range(0, count)]
 
-        for i in range(count):
-            generated_words = random_word.getList(5)
-
-            for j in range (len(generated_words)):
-                new_word = generated_words[j].upper()
-                generated_words[j] = new_word
-
-            words.append(' '.join(generated_words))
-
-        return words
-
-count = 100
+count = 500
 generator = NIKRandomGenerator(count=count)
-prefix = os.path.join(ROOT_DIR, 'train_test', 'DATASET', 'address_dataset')
+prefix = os.path.join(ROOT_DIR, 'train_test', 'DATASET', 'nik_dataset')
 os.makedirs(prefix, exist_ok=True)
 path = os.path.join(prefix, 'labels.csv')
 
