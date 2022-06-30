@@ -6,40 +6,68 @@ import numpy
 import pytesseract
 
 from src.ocr_process.ktp_information import KTPInformation
-
+from easyocr import Reader
 
 class OcrProcess:
     def __init__(self, image: numpy.ndarray):
         self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
         file_name = f"./{timestamp}.jpg"
-        # self.image = cv2.GaussianBlur(self.image, (5, 5), 0)
         cv2.imwrite(file_name, self.image)
         # self.th, self.threshed = cv2.threshold(self.image, 127, 255, cv2.THRESH_TRUNC)
 
-        self.th, self.threshed = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        self.threshed = cv2.adaptiveThreshold(self.threshed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-        # self.th, self.threshed = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        # self.image = cv2.GaussianBlur(self.image, (5, 5), 0)
+        self.image = cv2.GaussianBlur(self.image, (15, 15), sigmaX=0, sigmaY=0)
+        # _, self.threshed = cv2.threshold(self.image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
+        processed_image = clahe.apply(self.image)
+        self.threshed = cv2.resize(processed_image, (1280, 720), interpolation=cv2.INTER_LINEAR)
+
+        _, self.threshed = cv2.threshold(processed_image, 0, 255, cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
+        self.threshed = cv2.adaptiveThreshold(self.threshed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
+
+        # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        # processed_image = cv2.GaussianBlur(src=self.threshed, ksize=(3, 3), sigmaX=0, sigmaY=0)
+
+        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
+        # processed_image = clahe.apply(self.threshed)
             
         timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
         file_name = f"./{timestamp} 2.jpg"
+        # cv2.imwrite(file_name, self.threshed)
         cv2.imwrite(file_name, self.threshed)
         print(f"file saved at {file_name}")
+
+        print("[INFO] OCR'ing input image...")
+        start = time.time()
+        reader = Reader(["en"])
+        results = reader.readtext(image)
+        print("execution time: %.2f seconds" % (time.time() - start))
+
+        # loop over the results
+        for (bbox, text, prob) in results:
+            # display the OCR'd text and associated probability
+            print("[INFO] {:.4f}: {}".format(prob, text))
+            # # unpack the bounding box
+            # (tl, tr, br, bl) = bbox
+            # tl = (int(tl[0]), int(tl[1]))
+            # tr = (int(tr[0]), int(tr[1]))
+            # br = (int(br[0]), int(br[1]))
+            # bl = (int(bl[0]), int(bl[1]))
+            # # cleanup the text and draw the box surrounding the text along
+            # # with the OCR'd text itself
+            # text = cleanup_text(text)
+            # cv2.rectangle(image, tl, br, (0, 255, 0), 2)
+            # cv2.putText(image, text, (tl[0], tl[1] - 10),
+            # 	cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 255, 0), 2)
         
-        self.result = KTPInformation()
-        self.master_process()
+        # self.result = KTPInformation()
+        # self.master_process()
 
     def process(self):
         raw_extracted_text = pytesseract.image_to_string(
             (self.threshed), lang="ind")
-
-        # pipeline = keras_ocr.pipeline.Pipeline()
-        # prediction = pipeline.recognize(self.threshed)
-        # predicted_image = prediction[0]
-
-        # for text, box in predicted_image:
-        #     print(text)
 
         return raw_extracted_text
 
