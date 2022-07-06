@@ -24,7 +24,6 @@ class MainWindow(QMainWindow):
         self.selected_image: numpy.ndarray = None
         self.setup_view()
         self.setup_action()
-        # self.init_camera()
         # self.user_interface.take_picture_button.clicked.connect(self.take_picture)
         # self.user_interface.extract_image_button.clicked.connect(self.process_ocr)
         # self.user_interface.extract_image_button.setEnabled(False)
@@ -121,7 +120,7 @@ class MainWindow(QMainWindow):
     def extract_image(self):
         ocr_process = OcrProcess(self.selected_image)
         ocr_result = ocr_process.result
-        print(ocr_result)
+        print(ocr_result.to_string())
     
     def closeEvent(self, event):
         self.custom_thread.is_running = False

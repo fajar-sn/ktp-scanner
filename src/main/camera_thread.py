@@ -1,7 +1,8 @@
 import cv2
+import numpy
+
 from PyQt5.QtCore import QThread, Qt, pyqtSignal
 from PyQt5.QtGui import QImage
-import numpy
 
 class CameraThread(QThread):
     change_pixmap = pyqtSignal(QImage, numpy.ndarray)
@@ -9,14 +10,14 @@ class CameraThread(QThread):
     is_running = True
 
     def run(self):
-        print("\nrunning")
-        cap = cv2.VideoCapture(self.current_webcam_index)
+        # cap: cv2.VideoCapture = cv2.VideoCapture(self.current_webcam_index, cv2.CAP_V4L)
+        # cap = cv2.VideoCapture(self.current_webcam_index)
+        cap = cv2.VideoCapture(self.current_webcam_index, cv2.CAP_DSHOW)
 
         while self.is_running:
             ret, frame = cap.read()
 
             if not ret:
-                print("Failed to grab frame")
                 break
 
             rgb_image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

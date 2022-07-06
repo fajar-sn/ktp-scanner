@@ -6,8 +6,6 @@ import numpy
 import pytesseract
 
 from src.ocr_process.ktp_information import KTPInformation
-from PIL import Image
-# from easyocr import Reader
 
 class OcrProcess:
     def __init__(self, image: numpy.ndarray):
@@ -27,24 +25,14 @@ class OcrProcess:
 
         _, self.threshed = cv2.threshold(processed_image, 0, 255, cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
         self.threshed = cv2.adaptiveThreshold(self.threshed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
-
-        # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        # processed_image = cv2.GaussianBlur(src=self.threshed, ksize=(3, 3), sigmaX=0, sigmaY=0)
-
-        # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
-        # processed_image = clahe.apply(self.threshed)
             
         timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
         file_name = f"./{timestamp} 2.jpg"
-        # cv2.imwrite(file_name, self.threshed)
         cv2.imwrite(file_name, self.threshed)
         print(f"file saved at {file_name}")
 
         print("[INFO] OCR'ing input image...")
         start = time.time()
-        # reader = Reader(["en"])
-        # results = reader.readtext(image)
-        
 
         # # loop over the results
         # for (bbox, text, prob) in results:
@@ -70,7 +58,7 @@ class OcrProcess:
 
     def process(self):
         raw_extracted_text = pytesseract.image_to_string(
-            (self.threshed), lang="nik")
+            (self.threshed), lang="eng+ind")
 
         # image_to_box = pytesseract.image_to_boxes(self.threshed, lang="indbest")
 
@@ -105,7 +93,6 @@ class OcrProcess:
 
     def extract(self, extracted_result):
         self.extracted_result = extracted_result
-        print(extracted_result.replace('\n', ' -- '))
         for word in extracted_result.split("\n"):
             if "NIK" in word:
                 word = word.split(':')
