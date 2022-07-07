@@ -13,6 +13,8 @@ class CameraThread(QThread):
         # cap: cv2.VideoCapture = cv2.VideoCapture(self.current_webcam_index, cv2.CAP_V4L)
         # cap = cv2.VideoCapture(self.current_webcam_index)
         cap = cv2.VideoCapture(self.current_webcam_index, cv2.CAP_DSHOW)
+        cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1024)
+        cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 600)
 
         while self.is_running:
             ret, frame = cap.read()
@@ -24,5 +26,5 @@ class CameraThread(QThread):
             h, w, ch = rgb_image.shape
             bytes_per_line = ch * w
             convert_to_qt_format = QImage(rgb_image.data, w, h, bytes_per_line, QImage.Format_RGB888)
-            p = convert_to_qt_format.scaled(640, 480, Qt.KeepAspectRatio)
-            self.change_pixmap.emit(p, rgb_image)
+            convert_to_qt_format = convert_to_qt_format.scaled(800, 480, Qt.KeepAspectRatio)
+            self.change_pixmap.emit(convert_to_qt_format, rgb_image)
