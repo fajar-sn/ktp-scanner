@@ -51,7 +51,8 @@ print("execution time: %.2f seconds" % (time.time() - start))
 # loop over the results
 for (bbox, text, prob) in results:
 	# display the OCR'd text and associated probability
-	print("[INFO] {:.4f}: {}".format(prob, text))
+	# print("[INFO] {:.4f}: {}".format(prob, text))
+	print("{}".format(text))
 	# # unpack the bounding box
 	# (tl, tr, br, bl) = bbox
 	# tl = (int(tl[0]), int(tl[1]))

@@ -8,28 +8,28 @@ from src.ocr_process.ktp_information import KTPInformation
 
 class OcrProcess:
     def __init__(self, image: numpy.ndarray):
-        self.image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        self.threshed = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
         # For documentation purpose
         # timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
         # file_name = f"./{timestamp}.jpg"
-        # cv2.imwrite(file_name, self.image)
+        # cv2.imwrite(file_name, self.threshed)
         # self.th, self.threshed = cv2.threshold(self.image, 127, 255, cv2.THRESH_TRUNC)
 
         # Image blurring
-        self.image = cv2.GaussianBlur(self.image, (5, 5), sigmaX=0, sigmaY=0)
+        self.threshed = cv2.GaussianBlur(self.threshed, (7, 7), sigmaX=0, sigmaY=0)
         
         # Image
         # clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(12, 12))
         # processed_image = clahe.apply(self.image)
-        self.threshed = cv2.resize(self.image, (640, 360), interpolation=cv2.INTER_LINEAR)
+        # self.threshed = cv2.resize(self.threshed, (640, 360), interpolation=cv2.INTER_LINEAR)
 
-        _, self.threshed = cv2.threshold(self.image, 0, 255, cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
+        _, self.threshed = cv2.threshold(self.threshed, 0, 255, cv2.THRESH_TRUNC + cv2.THRESH_OTSU)
         self.threshed = cv2.adaptiveThreshold(self.threshed, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2)
             
-        # timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
-        # file_name = f"./{timestamp} 2.jpg"
-        # cv2.imwrite(file_name, self.threshed)
+        timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
+        file_name = f"./{timestamp} 4.jpg"
+        cv2.imwrite(file_name, self.threshed)
         # print(f"file saved at {file_name}")
 
         print("[INFO] OCR'ing input image...")
@@ -130,7 +130,7 @@ class OcrProcess:
                 
                 continue
 
-            if 'nam' in lines[i].casefold():
+            if 'nam' in lines[i].casefold() and len(self.result.name) < 5:
                 name_line = lines[i].split(":")
                 self.result.name = name_line[-1].replace('Nama ', '').strip()
                 continue
@@ -145,7 +145,7 @@ class OcrProcess:
                     if "nam" in lines[i].casefold():
                         self.result.name = " ".join(self.result.name.split()[1:]).strip()
 
-                continue
+                # continue
 
             if "Temp" in lines[i] or "Ten" in lines[i]:
                 lines[i] = lines[i].replace(",", "")

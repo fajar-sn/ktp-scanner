@@ -2,6 +2,9 @@ import os
 import numpy
 import csv
 import win32com.client
+import sqlite3
+# import time
+# import cv2
 
 from PyQt5 import uic
 from PyQt5.QtCore import *
@@ -26,6 +29,7 @@ class MainWindow(QMainWindow):
         self.selected_image: numpy.ndarray = None
         self.setup_view()
         self.setup_action()
+        self.setup_local_database()
 
     def setup_view(self) -> None:
         self.user_interface = uic.loadUi("./src/main/main_window.ui", self)
@@ -46,6 +50,50 @@ class MainWindow(QMainWindow):
         self.take_picture_button.clicked.connect(self.take_picture)
         self.extract_image_button.clicked.connect(self.extract_image)
         self.save_table_button.clicked.connect(self.save_table)
+
+    def setup_local_database(self):
+        connection = sqlite3.connect('ktp-scanner.db')
+        db_cursor = connection.cursor()
+
+        db_cursor.execute("""CREATE TABLE IF NOT EXISTS ktp_information(
+            id text,
+            province text,
+            regency text,
+            ktp_id text,
+            name text,
+            birth_place text,
+            birth_date text,
+            gender text,
+            blood_group text,
+            address text,
+            rtrw text,
+            village text,
+            district text,
+            relligion text,
+            marriage_status text,
+            job text,
+            citizenship text,
+            valid_until text
+        )""")
+
+        db_cursor.execute("SELECT * FROM ktp_information")
+        records = db_cursor.fetchall()
+
+        for record in records:
+            edited_record = list(record)
+            print(edited_record)
+            edited_record.append('')
+            self.table_model.extracted_data.append(edited_record)
+
+            delete_button = QPushButton('Hapus')
+            delete_button.clicked.connect(self.delete_button_on_click)
+            row = len(self.table_model.extracted_data) - 1
+            self.table_view.setIndexWidget(
+                self.table_model.index(row, 18), delete_button)
+            self.table_model.layoutChanged.emit()
+
+        connection.commit()
+        connection.close()
 
     def init_camera(self) -> None:
         self.available_cameras = QCameraInfo.availableCameras()
@@ -90,7 +138,7 @@ class MainWindow(QMainWindow):
         # For saving image purpose
 
         # timestamp = time.strftime("%d-%b-%Y-%H_%M_%S")
-        # file_name = f"./{timestamp}.jpg"
+        # file_name = f"./{timestamp} -1.jpg"
         # saved_image = cv2.cvtColor(self.viewfinder_image, cv2.COLOR_BGR2RGB)
         # cv2.imwrite(file_name, saved_image)
 
@@ -127,6 +175,7 @@ class MainWindow(QMainWindow):
             print(ocr_result.to_string())
 
             self.table_model.extracted_data.append([
+                f'{len(self.table_model.extracted_data) + 1}',
                 ocr_result.province,
                 ocr_result.regency,
                 ocr_result.id,
@@ -151,9 +200,38 @@ class MainWindow(QMainWindow):
             delete_button.clicked.connect(self.delete_button_on_click)
             row = len(self.table_model.extracted_data) - 1
             self.table_view.setIndexWidget(
-                self.table_model.index(row, 17), delete_button)
+                self.table_model.index(row, 18), delete_button)
             self.table_model.layoutChanged.emit()
+
+            connection = sqlite3.connect('ktp-scanner.db')
+            cursor = connection.cursor()
+            # cursor.execute("DELETE FROM ktp_information;",)
+
+            cursor.execute("INSERT INTO ktp_information VALUES (:id, :province, :regency, :ktp_id, :name, :birth_place, :birth_date, :gender, :blood_group, :address, :rtrw, :village, :district, :relligion, :marriage_status, :job, :citizenship, :valid_until)", {
+                'id': f'{len(self.table_model.extracted_data)}',
+                'province': ocr_result.province,
+                'regency': ocr_result.regency,
+                'ktp_id': ocr_result.id,
+                'name': ocr_result.name,
+                'birth_place': ocr_result.birth_place,
+                'birth_date': ocr_result.birth_date,
+                'gender': ocr_result.gender,
+                'blood_group': ocr_result.blood_group,
+                'address': ocr_result.address,
+                'rtrw': ocr_result.rtrw,
+                'village': ocr_result.village,
+                'district': ocr_result.district,
+                'relligion': ocr_result.relligion,
+                'marriage_status': ocr_result.marriage_status,
+                'job': ocr_result.job,
+                'citizenship': ocr_result.citizenship,
+                'valid_until': ocr_result.valid_until,
+            })
+
+            connection.commit()
+            connection.close()
         except Exception as exception:
+            print(f"\n{exception}\n")
             QMessageBox.critical(
                 self,
                 "Error",
@@ -192,6 +270,11 @@ class MainWindow(QMainWindow):
             f"Apakah Anda yakin untuk menghapus baris ke-{index.row()}")
 
         if reply == QMessageBox.Yes:
+            connection = sqlite3.connect('ktp-scanner.db')
+            cursor = connection.cursor()
+            cursor.execute(f"DELETE FROM ktp_information WHERE id = {index.row() + 1}")
+            connection.commit()
+            connection.close()
             self.table_model.extracted_data.remove(
                 self.table_model.extracted_data[index.row()])
             self.table_model.layoutChanged.emit()
@@ -211,10 +294,10 @@ class MainWindow(QMainWindow):
         outfile = open(fileName, 'w', newline='')
         writer = csv.writer(outfile)
 
-        writer.writerow(["Provinsi", "Kabupaten/Kota", "NIK", "Nama", "Tempat Lahir", "Tanggal Lahir", "Jenis Kelamin", "Golongan Darah",
+        writer.writerow(["ID, Provinsi", "Kabupaten/Kota", "NIK", "Nama", "Tempat Lahir", "Tanggal Lahir", "Jenis Kelamin", "Golongan Darah",
                         "Alamat", "RT/RW", "Kelurahan/Desa", "Kecamatan", "Agama", "Status Perkawinan", "Pekerjaan", "Kewarganegaraan", "Berlaku Hingga"])
-        
+
         writer.writerows(self.table_model.extracted_data)
-        
+
         QMessageBox.information(
             self, "Ekspor ke File Format CSV Berhasil", f"File berhasil diekspor ke {fileName}")
